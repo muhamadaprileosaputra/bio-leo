@@ -232,7 +232,7 @@
           <div class="avatar-ring-2"></div>
           <div class="avatar-ring-3"></div>
           <div class="relative z-10 w-20 h-20 sm:w-[96px] sm:h-[96px] lg:w-[140px] lg:h-[140px] rounded-full bg-black border-[3px] lg:border-4 border-[#06080f] flex items-center justify-center overflow-hidden shadow-[0_0_28px_rgba(0,229,255,0.22)]">
-            <img src="leo-gaming-3071.png" alt="LEO GAMING3071" class="w-full h-full object-contain scale-[1.22]" draggable="false">
+            <img src="leo-gaming3071.png" alt="LEO GAMING3071" class="w-full h-full object-contain scale-[1.22]" draggable="false">
           </div>
         </div>
 
@@ -569,12 +569,12 @@
 
     // Music player / playlist
     // Tambahkan lagu baru ke array ini. File MP3 diletakkan satu folder dengan bioleo.html.
-    var playlist = [
-      { title: 'Masa Depanmu (Speed Up)', src: 'Masa Depanmu (Speed Up).mp3' },
-      { title: 'DJ ASTAGA BERCANDA', src: 'DJ ASTAGA BERCANDA.mp3' },
-      { title: 'JKT48 12 Seconds', src: 'JKT48 12 Seconds.mp3' },
-      { title: 'JKT48 Seventeen', src: 'JKT48 Seventeen.mp3' }
-    ];
+    const playlist = [
+  "Masa Depanmu (Speed Up).mp3",
+  "DJ ASTAGA BERCANDA.mp3",
+  "JKT48 Seventeen.mp3",
+  "JKT48 12 Seconds.mp3"
+];
     var musicAudio = document.getElementById('music-audio');
     var musicTitle = document.getElementById('music-title');
     var musicCount = document.getElementById('music-count');
@@ -675,6 +675,78 @@
         musicAudio.currentTime = (Number(musicProgress.value) / 100) * musicAudio.duration;
       }
     });
+
+
+    // Media Session API: membuat tombol Prev/Next/Seek di kontrol media Chrome/Android
+    // ikut mengendalikan player yang sama.
+    function musicUpdateMediaSession() {
+      if (!('mediaSession' in navigator)) return;
+
+      var song = playlist[musicIndex];
+      if ('MediaMetadata' in window) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: song.title,
+          artist: 'APRILEO',
+          album: 'BIO APRILEO'
+        });
+      }
+      navigator.mediaSession.playbackState = musicAudio.paused ? 'paused' : 'playing';
+    }
+
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.setActionHandler('play', function () {
+          var p = musicAudio.play();
+          if (p && p.catch) p.catch(function () {});
+        });
+        navigator.mediaSession.setActionHandler('pause', function () {
+          musicAudio.pause();
+        });
+        navigator.mediaSession.setActionHandler('previoustrack', function () {
+          musicLoad(musicIndex - 1, true);
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', function () {
+          musicLoad(musicIndex + 1, true);
+        });
+        navigator.mediaSession.setActionHandler('seekbackward', function (details) {
+          var offset = details && details.seekOffset ? details.seekOffset : 10;
+          musicAudio.currentTime = Math.max(0, musicAudio.currentTime - offset);
+        });
+        navigator.mediaSession.setActionHandler('seekforward', function (details) {
+          var offset = details && details.seekOffset ? details.seekOffset : 10;
+          var duration = Number(musicAudio.duration);
+          var target = musicAudio.currentTime + offset;
+          musicAudio.currentTime = isFinite(duration) ? Math.min(duration, target) : target;
+        });
+        navigator.mediaSession.setActionHandler('seekto', function (details) {
+          if (!details) return;
+          if (details.fastSeek && typeof musicAudio.fastSeek === 'function') {
+            musicAudio.fastSeek(details.seekTime);
+          } else {
+            musicAudio.currentTime = details.seekTime;
+          }
+        });
+      } catch (e) {
+        // Beberapa browser tidak mendukung semua action handler.
+      }
+
+      musicAudio.addEventListener('play', function () {
+        navigator.mediaSession.playbackState = 'playing';
+      });
+      musicAudio.addEventListener('pause', function () {
+        navigator.mediaSession.playbackState = 'paused';
+      });
+      musicAudio.addEventListener('ended', function () {
+        navigator.mediaSession.playbackState = 'none';
+      });
+    }
+
+    // Perbarui metadata setiap kali lagu berganti.
+    var _musicLoadOriginal = musicLoad;
+    musicLoad = function (index, autoplay) {
+      _musicLoadOriginal(index, autoplay);
+      musicUpdateMediaSession();
+    };
 
     musicLoad(0, false);
 
