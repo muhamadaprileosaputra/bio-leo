@@ -1,0 +1,14 @@
+{
+  "name": "LEO GAMING3071 — Bio Link",
+  "short_name": "LEO GAMING3071",
+  "start_url": "https://bioleo.my.id/",
+  "scope": "https://bioleo.my.id/",
+  "id": "https://bioleo.my.id/",
+  "display": "standalone",
+  "background_color": "#0b0f16",
+  "theme_color": "#0b0f16",
+  "icons": [
+    {"src":"favicon-48.png","sizes":"48x48","type":"image/png"},
+    {"src":"apple-touch-icon.png","sizes":"180x180","type":"image/png"}
+  ]
+}
